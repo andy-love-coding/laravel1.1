@@ -49,4 +49,40 @@ class User extends Authenticatable
         return $this->statuses()
                     ->orderBy('created_at', 'desc');
     }
+
+    // 粉丝列表（一个明星 有 多个粉丝）（本model为“明星model”，user_id为本model关联键）
+    public function followers()
+    {
+        return $this->belongsToMany(User::Class, 'followers', 'user_id', 'follower_id');
+    }
+
+    // 明星列表 （一个粉丝 有 多个明星）（本model为“粉丝model”，follower_id为本model关联键）
+    public function followings()
+    {
+        return $this->belongsToMany(User::Class, 'followers', 'follower_id', 'user_id');
+    }
+
+    // 关注 （关注就是操作粉丝的明星列表）
+    public function follow($user_ids)
+    {
+        if ( ! is_array($user_ids)) {
+            $user_ids = compact('user_ids');
+        }
+        $this->followings()->sync($user_ids, false);
+    }
+
+    // 取消关注
+    public function unfollow($user_ids)
+    {
+        if ( ! is_array($user_ids)) {
+            $user_ids = compact('user_ids');
+        }
+        $this->followings()->detach($user_ids);
+    }
+
+    // 是否关注了传参的用户 （看这个用户是否在粉丝的明星列表中）
+    public function isFollowing($user_id)
+    {
+        return $this->followings->contains($user_id);
+    }
 }
